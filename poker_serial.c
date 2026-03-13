@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <mpi.h>
 
 typedef enum {CLUBS=0,SPADES=1,HEARTS=2,DIAMONDS=3} SUIT;
 
@@ -183,19 +184,19 @@ int main(int argc,char** argv){
 		if(isStraightFlush(pokerHand)){
 			straightFlushes++;
 		}
-		int totalFlushes;
-
-		MPI_Reduce(&straightFlushes,&totalFlushes,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-
-		if(rank == 0){
-			end = MPI_Wtime();
-			
-			percent = (float)totalFlushes/(float)cnt*100.0;
-
-			printf("We found %d straight flushes out of %d hands or %f percent.\n",totalFlushes,cnt,percent);
-			printf("Elapsed time: %f seconds\n",end-start);
-		}
 	}
+	int totalFlushes;
+	MPI_Reduce(&straightFlushes,&totalFlushes,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
+		
+	if(rank == 0){
+		end = MPI_Wtime();
+			
+		percent = (float)totalFlushes/(float)cnt*100.0;
+
+		printf("We found %d straight flushes out of %d hands or %f percent.\n",totalFlushes,cnt,percent);
+		printf("Elapsed time: %f seconds\n",end-start);
+	}
+	
 
 	MPI_Finalize();
 	return 0;
