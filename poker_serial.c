@@ -28,9 +28,12 @@ void randomCard(Card* card){
  * Arguments: cnt: an output variable to hold the selected number of trials
  * Returns: None
  */
- void getTotalTrials(int* cnt){
+ void getTotalTrials(int* cnt,int rank){
+	if(rank == 0){
 	printf("Enter the number of trials:\n");
 	scanf("%d",cnt);
+	}
+	MPI_Bcast(cnt,1,MPI_INT,0,MPI_COMM_WORLD);
  }
 
 /*inHand
@@ -144,13 +147,29 @@ void makeStraightFlush3(Hand hand){
 }
 
 int main(int argc,char** argv){
+	MPI_Init(&argc,&argv);
+
+	int rank,size;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD,&size);
+	
+	int cnt;
+	getTotalTrials(&cnt,rank);
+	int numTrials = cnt/size;
+	if(rank < cnt % size){
+		numTrials++:
+	}
+	srand(time(NULL)+rank);
 	int straightFlushes=0;
 	float percent;
 	Hand pokerHand;
-	srand(time(0));
-	int cnt;
-	getTotalTrials(&cnt);
-	for (int i=0;i<cnt;i++){
+
+	double start,end;
+	if(rank == 0){
+		start = MPI_Wtime();
+	}
+
+	for (int i=0;i<numTrials;i++){
 		int cardCount=0;
 		while (cardCount<5){
 			Card card;
@@ -161,15 +180,26 @@ int main(int argc,char** argv){
 				cardCount++;
 			}
 		}
-#ifdef DEBUG
-		printHand(pokerHand);
-#endif
-		if (isStraightFlush(pokerHand))
+		if(isStraightFlush(pokerHand)){
 			straightFlushes++;
+		}
+		int totalFlushes;
+
+		MPI_Reduce(&straightFlushes,&totalFlushes,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
+
+		if(rank == 0){
+			end = MPI_Wtime();
+			
+			percent = (float)totalFlushes/(float)cnt*100.0;
+
+			printf("We found %d straight flushes out of %d hands or %f percent.\n",totalFlushes,cnt,percent);
+			printf("Elapsed time: %f seconds\n",end-start);
+		}
 	}
 	percent=(float)straightFlushes/(float)cnt*100.0;
 
 	printf("We found %d straight flushes out of %d hands or %f percent.\n",straightFlushes,cnt,percent);
 
+	MPI_Finalize();
 	return 0;
 }
