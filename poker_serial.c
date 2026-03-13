@@ -157,7 +157,7 @@ int main(int argc,char** argv){
 	getTotalTrials(&cnt,rank);
 	int numTrials = cnt/size;
 	if(rank < cnt % size){
-		numTrials++:
+		numTrials++;
 	}
 	srand(time(NULL)+rank);
 	int straightFlushes=0;
@@ -196,9 +196,6 @@ int main(int argc,char** argv){
 			printf("Elapsed time: %f seconds\n",end-start);
 		}
 	}
-	percent=(float)straightFlushes/(float)cnt*100.0;
-
-	printf("We found %d straight flushes out of %d hands or %f percent.\n",straightFlushes,cnt,percent);
 
 	MPI_Finalize();
 	return 0;
